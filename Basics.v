@@ -1616,22 +1616,22 @@ Qed.
         converting it to unary and then incrementing.  
 *)
 
-(*
+
 Inductive bin : Type :=
-  | O : bin
+  | BinZero : bin
   | S1 : bin -> bin(*twice a binary number*)
   | S2 : bin -> bin(*one more than twice a binary number*).
 
 Fixpoint inc (n : bin) : bin :=
   match n with
-  | O => S2 O
+  | BinZero => S2 BinZero
   | S1 n' => S2 n'
   | S2 n' => S1 (inc n')
   end.
 
 Fixpoint conv (n : bin) : nat :=
   match n with
-  | O => 0
+  | BinZero => 0
   | S1 n' => 2 * conv n'
   | S2 n' => 2 * (conv n') +1
   end.
@@ -1641,7 +1641,7 @@ Theorem commute : forall n : bin,
 Proof.
   intros n.
   induction n  as [| n'| n'].
-  Case "n = 0".
+  Case "n = BinZero".
     simpl. reflexivity.
   Case "n = S1 n'".
     simpl.
@@ -1660,7 +1660,7 @@ Proof.
     reflexivity. 
 Qed.
 (** [] *)
-*)
+
 (** **** Exercise: 5 stars (binary_inverse) *)
 (** This exercise is a continuation of the previous exercise about
     binary numbers.  You will need your definitions and theorems from
@@ -1684,11 +1684,151 @@ Qed.
 
 
 *)
+(*
+Fixpoint convNatToBin (n : nat) : bin :=
+  match n with
+    |0 => BinZero
+    |S n' => inc  (convNatToBin n')
+  end.
 
 (* (b) Проблема в том, что 0 можно представить бесконечным
  колличеством способов:
 0;S1 0; S1 (S1 0)...
 *)
+
+Fixpoint eqBinZero (n : bin) : bool :=
+  match n with
+  | BinZero => true
+  | S1 n' =>eqBinZero n'
+  | _ => false
+  end.
+
+Fixpoint normalize (n : bin) : bin :=
+  if eqBinZero n then BinZero else
+  match n with
+  | BinZero => BinZero
+  | S1 n' => S1 (normalize n')  
+  | S2 n' => S2 (normalize n')  
+  end.
+
+Theorem comuteBinZero : forall n , eqBinZero n=true -> conv n = 0.
+Proof.
+  intros.
+  induction n.
+  reflexivity.
+  simpl.
+  rewrite plus_0_r.
+  rewrite IHn.
+  reflexivity.
+  inversion H.
+  reflexivity.
+  inversion H.
+Qed.
+
+
+Theorem plus_is_O : forall n ,  n+ n = 0 -> n=0.
+Proof.
+  intros.
+  induction n.
+  reflexivity.
+  rewrite IHn.
+  inversion H.
+  inversion H.
+Qed.
+
+Theorem Snm_nSm: forall n  m,  n + S m = S n + m.
+
+Proof.
+  intros.
+  induction n.
+  reflexivity.
+  simpl.
+  rewrite IHn.
+  reflexivity.
+Qed.
+
+Theorem plus_is_O' : forall n  m,  n + m = 0 ->m=0.
+Proof.
+  intros.
+  induction m.
+  reflexivity.
+  rewrite IHm.
+  rewrite Snm_nSm in H.
+  inversion H.
+  rewrite Snm_nSm in H.
+  inversion H.
+Qed.
+
+
+Theorem Snm_nSm': forall n,  n + 1 = 1 + n.
+Proof.
+  intros.
+  induction n.
+  reflexivity.
+  simpl.
+  rewrite IHn.
+  reflexivity.
+Qed.
+
+Theorem comuteBinZero1 : forall n ,  conv n = 0 -> eqBinZero n=true.
+Proof.
+  intros.
+  induction n.
+  reflexivity.
+  simpl.
+  apply IHn.
+  inversion H.
+  rewrite plus_0_r in H1.
+  rewrite plus_is_O with (n:=conv n ).
+  reflexivity.
+  apply H1.
+  inversion H.
+  rewrite plus_0_r in H1.
+  apply plus_is_O' with (n:=conv n + conv n) (m:=1) in H1.
+  inversion H1.
+Qed.
+  
+  
+(*
+Theorem comuteS1 : forall n , beq_nat n 0=false ->conv (n + n)=S1 (conv n).
+*)
+
+
+Theorem commuteNatToBin : forall n ,
+beq_nat n 0=false ->
+  convNatToBin (n + n) = S1 ( convNatToBin n).
+Proof.
+  intros.
+  induction n.
+  inversion H.
+  simpl.
+  
+
+Theorem commuteNatToBin : forall n : bin,
+  convNatToBin (conv n) = normalize n.
+Proof.
+  intros.
+  induction n.
+  reflexivity.
+  simpl.
+  remember (eqBinZero n) as H.
+  destruct H.
+  rewrite comuteBinZero.
+  rewrite plus_0_r.
+  reflexivity.
+  symmetry.
+  apply HeqH.
+  rewrite plus_0_r.
+  rewrite <-IHn.
+  remember (conv n) as H.
+  destruct H.
+  symmetry in HeqH0.
+  apply comuteBinZero1 in HeqH0.
+  rewrite <- HeqH in HeqH0.
+  inversion HeqH0.
+  simpl.
+  reflexivity.
+  *)
 
 (** **** Exercise: 2 stars, optional (decreasing) *)
 (** The requirement that some argument to each function be
@@ -1702,26 +1842,11 @@ Qed.
     [Fixpoint] definition (of a simple function on numbers, say) that
     _does_ terminate on all inputs, but that Coq will _not_ accept
     because of this restriction. *)
-(*
-Fixpoint div2 (n : nat) : nat :=
-  match n with  
-    |0 => 0
-    |S 0 => 0
-    |S (S n') => S (div2 n')
-  end.
+
 (*Дальше компилиться не будет, проблема с рекурсией.
 (b) Проблема в том, что 0 можно представить бесконечным
  колличеством способов:
 0;S1 0; S1 (S1 0)...*)
-Fixpoint convNatToBin (n : nat) : bin :=
-  match n, (div2 n) with
-    |0, n' => O
-    |S _ ,n'=>
-     match evenb n with
-     |true=>S1 (convNatToBin  n')
-     |false=>S2 (convNatToBin  n')
-      end
-  end.
-*)
+
 (** [] *)
 
