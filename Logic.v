@@ -725,6 +725,7 @@ Proof.
   apply IHev.
   inversion H0.
   apply H2.
+Qed.
 (** [] *)
 
 (** Note that some theorems that are true in classical logic are _not_
@@ -794,28 +795,31 @@ Theorem not_eq_beq_false : forall n n' : nat,
 Proof. 
   unfold not.
   intros.
+  SearchAbout beq_nat.
+  remember (beq_nat n n') as be.
+  destruct be.
+  apply ex_falso_quodlibet.
+  apply H.
+  SearchAbout beq_nat.
   apply beq_nat_eq.
-  SearchAbout beq_nat.
-  induction n.
-  destruct n'.
-    apply ex_falso_quodlibet.
-    
-    apply H.
-    reflexivity.
-  SearchAbout beq_nat.
-  simpl.
-    reflexivity.
-    simpl.
-  destruct n'.
-  simpl.
-    reflexivity.
+  apply Heqbe.
+  reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (beq_false_not_eq) *)
 Theorem beq_false_not_eq : forall n m,
   false = beq_nat n m -> n <> m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold not.
+  intros.
+  rewrite H0 in H.
+  SearchAbout beq_nat.
+  replace (beq_nat m m) with true in H.
+  inversion H.
+  apply beq_nat_refl.
+Qed.
+  
 (** [] *)
 
 (* ############################################################ *)
@@ -908,12 +912,14 @@ Proof.
 ]] 
     mean? *)
 
-(* FILL IN HERE *)
+(* Exists natural number n that beautiful (S n) provable. *)
 
 (** Complete the definition of the following proof object: *)
 
 Definition p : ex nat (fun n => beautiful (S n)) :=
-(* FILL IN HERE *) admit.
+ex_intro nat (fun n => beautiful (S n)) 2 b_3 .
+  
+  
 (** [] *)
 
 (** **** Exercise: 1 star (dist_not_exists) *)
@@ -923,7 +929,12 @@ Definition p : ex nat (fun n => beautiful (S n)) :=
 Theorem dist_not_exists : forall (X:Type) (P : X -> Prop),
   (forall x, P x) -> ~ (exists x, ~ P x).
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  unfold not.
+  intros.
+  inversion H0.
+  apply H1.
+  apply H.
+Qed. 
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (not_exists_dist) *)
@@ -935,7 +946,22 @@ Theorem not_exists_dist :
   forall (X:Type) (P : X -> Prop),
     ~ (exists x, ~ P x) -> (forall x, P x).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold not.
+  intros.
+  assert (P x \/ ~P x).
+  apply H.
+  inversion H1.
+  Case "P x".
+    apply H2.
+  Case "~P x".
+    unfold not in H2.
+    apply ex_falso_quodlibet.
+    apply H0. 
+    exists (x).  
+    unfold not in H2.
+    apply H2.
+Qed.
+  
 (** [] *)
 
 (** **** Exercise: 2 stars (dist_exists_or) *)
@@ -945,7 +971,34 @@ Proof.
 Theorem dist_exists_or : forall (X:Type) (P Q : X -> Prop),
   (exists x, P x \/ Q x) <-> (exists x, P x) \/ (exists x, Q x).
 Proof.
-   (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  Case "->".
+    intros.
+    inversion H.
+    inversion H0.
+    SCase "P witness".
+      left.
+      exists witness.
+      apply H1.
+    SCase "Q witness".
+      right.
+      exists witness.
+      apply H1.
+  Case "->".
+    intros.
+    inversion H.
+    SCase "exists x : X, P x".
+      inversion H0.
+      exists witness.
+      left.
+      apply H1.
+    SCase "exists x : X, Q x".
+      inversion H0.
+      exists witness.
+      right.
+      apply H1.
+Qed.
 (** [] *)
 
 (* Print dist_exists_or. *)
@@ -992,7 +1045,15 @@ Notation "x =' y" := (eq' _ x y)
 Theorem two_defs_of_eq_coincide : forall (X:Type) (x y : X),
   x = y <-> x =' y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  intros.
+  destruct H.
+  apply refl_equal'.
+  intros.
+  destruct H.
+  apply refl_equal.
+Qed.
 (** [] *)
 
 (** The advantage of the second definition is that the induction
@@ -1204,14 +1265,15 @@ Inductive next_even (n:nat) : nat -> Prop :=
 (** Define an inductive binary relation [total_relation] that holds
     between every pair of natural numbers. *)
 
-(* FILL IN HERE *)
+Inductive total_relation : nat -> nat->Prop :=
+  total_relation1:forall n m:nat, total_relation n m.
+
 (** [] *)
 
 (** **** Exercise: 2 stars (empty_relation) *)
 (** Define an inductive binary relation [empty_relation] (on numbers)
     that never holds. *)
-
-(* FILL IN HERE *)
+Inductive empty_relation: nat -> nat -> Prop := .
 (** [] *)
 
 (** **** Exercise: 3 stars, recommended (R_provability) *)
@@ -1228,7 +1290,7 @@ Inductive R : nat -> nat -> nat -> Prop :=
    | c5 : forall m n o, R m n o -> R n m o.
 
 (** - Which of the following propositions are provable?
-      - [R 1 1 2]
+      - [R 1 1 2] 
       - [R 2 2 6]
 
     - If we dropped constructor [c5] from the definition of [R],
@@ -1239,7 +1301,12 @@ Inductive R : nat -> nat -> nat -> Prop :=
       would the set of provable propositions change?  Briefly (1
       sentence) explain your answer.
 
-(* FILL IN HERE *)
+(*
+      - [R 1 1 2] provable c2 c3 c1
+      - [R 2 2 6] not provable 2+2 <>6
+      c4 and c5 are useless.
+      We need only c2 and c3 to reduce m, n and o to 0. Then we can use c1.  
+*)
 []
 *)
 
@@ -1249,8 +1316,54 @@ Inductive R : nat -> nat -> nat -> Prop :=
     [n], and [o], and vice versa?
 *)
 
-(* FILL IN HERE *)
-(** [] *)
+Theorem RT1 : forall n, R 0 n n.
+Proof.
+  intros.
+  induction n as [| n'].
+  SSCase "n = 0".
+    apply c1.
+  SSCase "n = S n'".
+    apply c3.
+    apply IHn'.
+Qed.
+Theorem RT2 : forall n m, R n m (n+m).
+Proof.
+  intros.
+  induction n as [| n'].
+  SSCase "n = 0".
+    apply RT1.
+  SSCase "n = S n'".
+    apply c2.
+    apply IHn'.
+Qed.
+
+Theorem RT : forall m n o,
+  R m n o <-> m+n=o.
+Proof.
+  split.
+  Case "->".
+    intros.
+    induction H.
+    reflexivity.
+    rewrite <- IHR.
+    reflexivity.
+    rewrite <- IHR.
+    rewrite plus_n_Sm.
+    reflexivity.
+    inversion IHR.
+    rewrite <- plus_n_Sm in H1.
+    inversion H1.
+    reflexivity.
+    rewrite plus_comm.
+    apply IHR.
+  Case "->".
+    intros.
+    rewrite <- H.
+    apply RT2.
+Qed.
+    
+      
+
 
 End R.
 
@@ -1260,8 +1373,9 @@ End R.
     asserts that [P] is true for every element of the list [l]. *)
 
 Inductive all (X : Type) (P : X -> Prop) : list X -> Prop :=
-  (* FILL IN HERE *)
-.
+  |all0 : all X P []
+  |all1 : forall h l, P h -> all X P l -> all X P (h::l). 
+
 
 (** Recall the function [forallb], from the exercise
     [forall_exists_challenge] in chapter [Poly]: *)
@@ -1278,8 +1392,38 @@ Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
 
     Are there any important properties of the function [forallb] which
     are not captured by your specification? *)
-
-(* FILL IN HERE *)
+SearchAbout bool.
+Theorem forallbT : forall (X : Type) (test : X -> bool) (l : list X) , 
+  forallb test l=true<->all X (fun n=>test n=true) l.
+Proof.
+  split.
+  Case "->".
+    intros.
+    induction l as [| h l'].
+    SCase "l=[]".
+      apply all0.
+    SCase "l=h::l'".
+      apply all1.
+      simpl in H.
+      SearchAbout andb.
+      rewrite andb_true_elim1 with (b:=test h) (c:=forallb test l').
+      reflexivity.
+      apply H.
+      apply IHl'.
+      rewrite andb_true_elim2 with (b:=test h) (c:=forallb test l').
+      reflexivity.
+      apply H.
+  Case "<-".
+    intros.
+    induction H.
+    SCase "all0".
+      reflexivity.
+    SCase "all1".
+      simpl.
+      rewrite H.
+      simpl.
+      apply IHall.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, optional (filter_challenge) *)
@@ -1307,7 +1451,39 @@ Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
     for one list to be a merge of two others.  Do this with an
     inductive relation, not a [Fixpoint].)  *)
 
-(* FILL IN HERE *)
+
+Inductive mrg (X : Type) (P : X -> Prop) : list X -> list X -> list X -> Prop :=
+  |mrg0 : mrg X P [] [] []
+  |mrg1 : forall h l1 l2 l3, P h -> mrg X P l1 l2 l3 -> mrg X P (h::l1) (h::l2) l3
+  |mrg2 : forall h l1 l2 l3, ~P h -> mrg X P l1 l2 l3 -> mrg X P (h::l1) l2 (h::l3). 
+
+
+Theorem mrgT : forall (X : Type) (test : X -> bool) (l1 l2 l3 : list X) , 
+  mrg X (fun n=>test n=true) l1 l2 l3->  filter test l1=l2.
+Proof.
+  intros.
+    induction H.
+    Case "mrg0".
+      simpl.
+      reflexivity.
+    Case "mrg1".
+      simpl.
+      rewrite H.
+      rewrite IHmrg.
+      reflexivity.
+    Case "mrg2".
+      simpl.
+      unfold not in H.
+      remember (test h) as t.
+      destruct t.
+      SCase "true".
+        apply ex_falso_quodlibet.
+        apply H.
+        reflexivity.
+      SCase "false".
+        apply IHmrg.
+Qed.
+    
 (** [] *)
 
 (** **** Exercise: 5 stars, optional (filter_challenge_2) *)
@@ -1316,7 +1492,61 @@ Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
     that [test] evaluates to [true] on all their members, [filter test
     l] is the longest.  Express this claim formally and prove it. *)
 
-(* FILL IN HERE *)
+Inductive subs (X : Type): list X -> list X -> Prop :=
+  |subs0 : subs X [] []
+  |subs1 : forall h l1 l2, subs X l1 l2 -> subs X (h::l1) (h::l2)
+  |subs2 : forall h l1 l2, subs X l1 l2 -> subs X l1 (h::l2). 
+Theorem leT :forall n1 n2, n1<=n2->S n1<= S n2.
+  Proof.
+    intros.
+    induction H.
+      apply le_n.
+      apply le_S.
+      apply IHle.
+Qed.
+
+
+Theorem fT : forall (X : Type) (test : X -> bool) (l1 l2: list X) , 
+  ((subs X l1 l2)/\forallb test l1=true)->((length l1) <= length (filter test l2)).
+  Proof.
+    intros.
+    induction H.
+    induction H.
+    Case "subs0".
+      simpl.
+      apply le_n.
+    Case "subs1".
+      simpl.
+      remember (test h) as t.
+      destruct t.
+      SCase "true".
+        simpl.
+        apply leT.
+        apply IHsubs.
+        inversion H0.
+        rewrite H2.
+        rewrite <- Heqt in H2.
+        simpl in H2.
+        apply H2.
+      SCase "false".
+        simpl in H0.
+        rewrite <- Heqt in H0.
+        inversion H0.        
+    Case "subs2".
+      simpl.
+      remember (test h) as t.
+      destruct t.
+      SCase "true".
+        simpl.
+        apply le_S.
+        apply IHsubs.
+        apply H0.
+      SCase "false".
+        apply IHsubs.
+        apply H0.
+Qed.    
+      
+      
 (** [] *)
 
 (** **** Exercise: 4 stars, optional (no_repeats) *)
@@ -1326,27 +1556,91 @@ Inductive appears_in {X:Type} (a:X) : list X -> Prop :=
   | ai_here : forall l, appears_in a (a::l)
   | ai_later : forall b l, appears_in a l -> appears_in a (b::l).
 
+Theorem app_nil_end : forall (X:Type) (l : list X), l++[]=l.
+Proof.
+  intros.
+  induction l. 
+  reflexivity.
+  rewrite<- IHl at 2.
+  simpl.
+  reflexivity.
+Qed.    
+  
 (** ...gives us a precise way of saying that a value [a] appears at
     least once as a member of a list [l]. 
 
     Here's a pair of warm-ups about [appears_in].
 *)
-
 Lemma appears_in_app : forall {X:Type} (xs ys : list X) (x:X), 
      appears_in x (xs ++ ys) -> appears_in x xs \/ appears_in x ys.
+
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X.
+  induction xs.
+  simpl.
+  intros.
+  right.
+  apply H.
+  induction ys.
+  simpl.
+  rewrite app_nil_end.
+  intros.
+  left.
+  apply H.
+  intros.
+  inversion H.
+  
+  Case "ai_here".
+    left.
+    apply ai_here.
+  Case "ai_later".
+    subst.
+apply IHxs in H1. 
+inversion H1.
+  left.
+    apply ai_later.
+    apply H0.
+    right.
+    apply H0.
+Qed.
 
 Lemma app_appears_in : forall {X:Type} (xs ys : list X) (x:X), 
      appears_in x xs \/ appears_in x ys -> appears_in x (xs ++ ys).
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros.
+  inversion H.
+  Case "left".
+    induction xs.
+    SCase "xs=[]".
+      inversion H0.
+    SCase "xs=x0 :: xs".
+      inversion H0.
+      apply ai_here.
+      apply ai_later.
+      apply IHxs.
+      left.
+      apply H2.
+      apply H2.
+  Case "right".
+    induction xs.
+    SCase "xs=[]".
+      apply H0.
+    SCase "xs=x0 :: xs".
+      apply ai_later.
+      apply IHxs.
+      right.
+      apply H0.
+Qed.
+  
 (** Now use [appears_in] to define a proposition [disjoint X l1 l2],
     which should be provable exactly when [l1] and [l2] are
     lists (with elements of type X) that have no elements in common. *)
 
-(* FILL IN HERE *)
+
+Inductive disjoint {X:Type} : list X -> list X -> Prop :=
+  | disjoint0 : forall l, disjoint [] l
+  | disjoint1 : forall h l1 l2, ~appears_in h l2 -> disjoint l1 l2 -> disjoint (h::l1) l2
+  | disjoint2 : forall h l1 l2, ~appears_in h l1 -> disjoint l1 l2 -> disjoint l1 (h::l2).
 
 (** Next, use [appears_in] to define an inductive proposition
     [no_repeats X l], which should be provable exactly when [l] is a
@@ -1355,8 +1649,10 @@ Proof.
     [no_repeats bool []] should be provable, while [no_repeats nat
     [1,2,1]] and [no_repeats bool [true,true]] should not be.  *)
 
-(* FILL IN HERE *)
 
+Inductive no_repeats {X:Type} : list X -> Prop :=
+  | no_repeats0 : no_repeats []
+  | no_repeats1 : forall h l, ~appears_in h l -> no_repeats (h::l).
 (** Finally, state and prove one or more interesting theorems relating
     [disjoint], [no_repeats] and [++] (list append).  *)
 
