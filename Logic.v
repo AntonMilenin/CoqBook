@@ -1,9 +1,8 @@
 (** * Logic: Logic in Coq *)
 
 (* $Date: 2012-07-22 18:36:58 -0400 (Sun, 22 Jul 2012) $ *)
-Require Import LibTactics.
+(*Require Import LibTactics.*)
 Require Export "Prop". 
-
 (** Coq's built-in logic is extremely small: only [Inductive]
     definitions, universal quantification ([forall]), and
     implication ([->]) are primitive, while all the other familiar
@@ -840,32 +839,18 @@ Proof.
 Qed.
 
 
-Theorem excluded_middle_peirce:
-  excluded_middle->peirce.
+Theorem classic_peirce:
+  classic->peirce.
 Proof.
-  unfold peirce, excluded_middle, not.
+  unfold peirce, classic, not.
   intros.
-  apply H0.
-  intros.
-  assert ((P->Q)\/~(P->Q)) as exc.
-   unfold not. apply H.
-  inversion exc.
-   apply H2.
-   apply H1.
-   unfold not in H2.
-  assert ((P -> False) -> P) as P_False_P.
+  apply H.
   intros.
   apply H1.
-  Unfold H
-   
-   left. apply H1.
-   unfold not in H1.
-   assert (Q\/~Q) as exc1.
-    unfold not.
-    apply H.
-   inversion exc1.
-   right. apply H2.
-   unfold not in H2. apply ex_falso_quodlibet. apply H0. intuition.
+  apply H0.
+  intros.
+  apply H1 in H2.
+  inversion H2.
 Qed.
 
 (** [] *)
@@ -2081,18 +2066,22 @@ Qed.
 (** Now define a predicate [repeats] (analogous to [no_repeats] in the
    exercise above), such that [repeats X l] asserts that [l] contains
    at least one repeated element (of type [X]).  *)
-
+(*
 Inductive repeats {X:Type} : list X -> Prop :=
   repeats0 : forall l1 l2 l3 x,repeats (l1++(x::l2)++(x::l3))
 .
-
+*)
+Inductive repeats {X:Type} : list X -> Prop :=
+  |repeats0 : forall l x,appears_in x l -> repeats (x::l)
+  |repeats1 : forall l x,repeats l -> repeats (x::l)
+.
 (** Now here's a way to formalize the pigeonhole principle. List [l2]
    represents a list of pigeonhole labels, and list [l1] represents an
    assignment of items to labels: if there are more items than labels,
    at least two items must have the same label.  You will almost
    certainly need to use the [excluded_middle] hypothesis. *)
 
-
+(*
 Theorem app_nil : forall {X:Type} (l:list X), 
    l ++ [] = l.
 Proof.
@@ -2231,7 +2220,10 @@ Proof.
   apply H2.
  Qed.
   
-Fixpoint wlast {X:Type} : .
+Fixpoint wlast {X:Type} (l : list X) :
+  match l with
+  |[] => return []
+  |h::l' => .
 
 Theorem tl_intr : forall {X:Type} x1 x2 (l1 l2 :list X), 
    x1::l1 = l2++[x2] ->tl(x1::l1)=l2(*\/x1=x2*).
@@ -2358,6 +2350,15 @@ Proof.
     simpl.
     reflexivity.
   Case "ap_later".
+*)
+
+Theorem Slength : forall {X:Type} x (l:list X),
+length (x::l)=S (length l).
+Proof.
+  intros.
+  simpl.
+  reflexivity.
+Qed.
 
 Theorem pigeonhole_principle: forall {X:Type} (l1 l2:list X),
   excluded_middle -> 
@@ -2372,21 +2373,29 @@ Proof.  intros X l1. induction l1.
   Case "l1=x::l1".
     intros.
     assert (appears_in x l1 \/ ~appears_in x l1).
-    apply H.
-    inversion H2.
     SCase "appears_in x l1".
-      inversion H3.
-      replace (x :: x :: l) with ([]++(x::[])++(x::l)).
+      apply H.
+      inversion H2.
       apply repeats0.
-      simpl.
-      reflexivity.
+      apply H3.
     SCase "~appears_in x l1".
-    apply repeats0.
-    unfold not.
-    intros.
-    destruct l2.
-    apply H0.
-    apply repeats0 in IHl1.
+    (*  destruct l2.
+      SSCase "l2=[]".
+        apply ex_falso_quodlibet.
+        assert (appears_in x []->False).
+        intros.
+        inversion H4.
+        apply H4.
+        apply H0.
+        apply ai_here.
+      SSCase "l2=x0::l2".*)
+        apply repeats1.
+        apply IHl1 with (l2:=remove x l2).
+        apply H.
+        intros.
+        apply H0.
+        apply ai_later.
+        apply H4.
 (** [] *)
 
 (* ####################################################### *)
