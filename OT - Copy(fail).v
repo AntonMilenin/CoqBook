@@ -311,6 +311,163 @@ Proof.
   apply H.
 Qed.
 
+(*
+Theorem T0 : forall n0 a a0 l,insert1 n0 a0 (insert1 n0 a l) =match insert1 n0 a0 l with
+            | [] => []
+            | h :: l' => h :: insert1 n0 a l'
+            end.
+Proof.
+  intros.
+  generalize n0.
+  induction l.
+  intros.
+  destruct n1.
+  simpl.
+  reflexivity.
+  simpl.
+  reflexivity.
+  intros.
+  destruct n1.
+  simpl.
+  reflexivity.
+  simpl.
+  rewrite IHl.
+  reflexivity.
+Qed.
+  
+Theorem T1 : forall n0 x a1 a a0 l,
+insert (S (S n0)) a0 (x :: a1 :: insert1 n0 a l) =
+insert (S (S (S n0))) a (x :: a1 :: insert1 n0 a0 l).
+Proof.
+  intros.
+*)(*
+Theorem OT_ : forall (f1 f2:function) (b1 b2: bool) (l:option (list ascii)), 
+  excluded_middle ->xor_boolToProp b1 b2-> apply (OT f1 f2 b1) (apply f1 l)=apply (OT f2 f1 b2) (apply f2 l).
+Proof.
+  intros.
+  unfold excluded_middle in H.
+  unfold not in H.
+  destruct f1, f2.
+  Case "f1=inv, f2=inv".
+   destruct H0.
+   SCase "b1 = false /\ b2 = true".
+    inversion H0.
+    rewrite H1.
+    rewrite H2.
+    unfold OT.
+    unfold function_eq.
+    remember (beq_nat n n0) as beq.
+    destruct beq.
+    SSCase "beq_nat n n0=true".
+     rewrite beq_nat_com.
+     rewrite <- Heqbeq.
+     simpl.
+     remember (beq_ascii a a0) as beqa.
+     destruct beqa.
+     SSSCase "beq_ascii a a0=true".
+      rewrite beq_ascii_com.
+      rewrite <- Heqbeqa.
+      apply beq_nat_eq in Heqbeq.
+      rewrite Heqbeq.
+      apply beq_ascii_eq in Heqbeqa.
+      rewrite Heqbeqa.
+      reflexivity.
+     SSSCase "beq_ascii a a0=false".
+      rewrite beq_ascii_com.
+      rewrite <- Heqbeqa.
+      apply beq_nat_eq in Heqbeq.
+      rewrite Heqbeq.
+      rewrite <- ble_nat_refl.
+      simpl.
+      destruct l.
+      SSSSCase "l=Some l".
+      remember (ble_nat (S(length l)) n0) as ble.
+      destruct ble.
+      simpl.
+      unfold insert .
+      simpl.
+      destruct n0.
+      simpl.
+      reflexivity.
+      simpl in Heqble.
+      rewrite <-Heqble.
+      simpl.
+      reflexivity.
+      simpl.
+      generalize dependent n0.
+      induction l.
+      intros.
+      destruct n0.
+      simpl.
+      reflexivity.
+      simpl.
+      reflexivity.
+      intros.
+      destruct n0.
+      simpl.
+      reflexivity.
+      simpl.
+      destruct n0.
+      simpl.
+      reflexivity.
+      simpl.
+      simpl in Heqble.
+      rewrite <-Heqble.
+      unfold apply.
+      destruct l.
+      inversion Heqble.
+      simpl.
+      destruct n0.
+      replace (length (a1 :: l)) with (S (length l)) in Heqble.
+      apply ins_len with (a:=a0) in Heqble.
+      rewrite Heqble.
+      simpl.
+      reflexivity.
+      simpl.
+      reflexivity.
+      replace (length (a1 :: l)) with (S (length l)) in Heqble.
+      rewrite ins_len with (a:=a).
+      rewrite ins_len with (a:=a0).
+      rewrite <- Heqble.
+      inversion Heqble.
+      apply bleSF in Heqble.
+      rewrite <- Heqble.
+      destruct l.
+      simpl.
+      reflexivity.
+      simpl.
+      rewrite T0.
+      reflexivity.
+      apply Heqble.
+      apply Heqble.
+      reflexivity.
+      simpl.
+      reflexivity.
+    SSCase "beq_nat n n0=false".
+     simpl.
+     rewrite beq_nat_com.
+     rewrite <- Heqbeq.
+     simpl.
+     remember (ble_nat n0 n) as ble.
+     destruct ble.
+     SSSCase "true=ble_nat n0 n".
+      simpl.
+      destruct l.
+      SSSSCase "l=Some l".
+(**)
+       destruct n.
+       simpl.
+       destruct n0.
+       simpl.
+       reflexivity.
+       destruct l.
+       simpl.
+       destruct n0.
+       simpl.
+      SSSSCase "l=None".
+     SSSCase "false=ble_nat n0 n".
+     
+*)
 Theorem OT1 : forall n a l l1,apply (fInsert n a) l = Some l1->S (length l)=length l1.
 Proof.
   intros n a l.
@@ -454,37 +611,42 @@ Proof.
   apply H.
 Qed.
 
-Theorem OT_ : forall (f1 f2:function) (b1 b2: bool) (l l1 l2:list ascii),((apply f1 l)=Some l1 
- /\ (apply f2 l) =Some l2)-> (apply (OT f1 f2 false) l1 =apply (OT f2 f1 true) l2/\exists l3,apply (OT f2 f1 true) l2=Some l3).
+Theorem OT_ : forall (f1 f2:function) (b1 b2: bool) (l l1 l2:list ascii),xor_boolToProp b1 b2->((apply f1 l)=Some l1 
+ /\ (apply f2 l) =Some l2)-> (apply (OT f1 f2 b1) l1 =apply (OT f2 f1 b2) l2/\exists l3,apply (OT f2 f1 b2) l2=Some l3).
 Proof.
   intros.
+  inversion H0.
   destruct f1,f2.
   Case "f1=inv, f2=inv".
+   destruct H.
+   SCase "b1 = false /\ b2 = true".
     inversion H.
+    rewrite H3.
+    rewrite H4.
     unfold OT.
     unfold function_eq.
     remember (beq_nat n n0) as beq.
     destruct beq.
-    SCase "beq_nat n n0=true".
+    SSCase "beq_nat n n0=true".
      rewrite beq_nat_sym.
      rewrite <- Heqbeq.
      simpl.
      remember (beq_ascii a a0) as beqa.
      destruct beqa.
-     SSCase "beq_ascii a a0=true".
+     SSSCase "beq_ascii a a0=true".
       rewrite beq_ascii_sym.
       rewrite <- Heqbeqa.
       apply beq_nat_eq in Heqbeq.
-      rewrite Heqbeq in H0.
+      rewrite Heqbeq in H1.
       apply beq_ascii_eq in Heqbeqa.
-      rewrite Heqbeqa in H0.
-      rewrite H0 in H1.
-      inversion H1.
+      rewrite Heqbeqa in H1.
+      rewrite H1 in H2.
+      inversion H2.
       split.
       reflexivity.
       exists l2.
       reflexivity.
-     SSCase "beq_ascii a a0=false".
+     SSSCase "beq_ascii a a0=false".
       rewrite beq_ascii_sym.
       rewrite <- Heqbeqa.
       apply beq_nat_eq in Heqbeq.
@@ -493,66 +655,66 @@ Proof.
       simpl.
       remember (ble_nat (length l2) n0) as ble.
       destruct ble.
-      SSSCase "true=ble_nat (length l2) n0".
-       unfold apply in H1,H0.
-       inversion H.
-       apply OT1 in H2.
-       apply OT1 in H3.
-       unfold insert in H0,H1.
-       simpl in H0,H1.
+      SSSSCase "true=ble_nat (length l2) n0".
+       unfold apply in H2.
+       inversion H0.
+       apply OT1 in H6.
+       unfold insert in H2.
+       simpl in H2.
        destruct n0.
-       inversion H1.
-       rewrite <- H5 in Heqble.
+       inversion H2.
+       rewrite <- H6 in Heqble.
        inversion Heqble.
-       rewrite <- H3 in Heqble.
+       rewrite <- H6 in Heqble.
        simpl in Heqble.
-       rewrite <- Heqble in H1.
-       inversion H1.
-      SSSCase "false=ble_nat (length l2) n0".
+       rewrite <- Heqble in H2.
+       inversion H2.
+      SSSSCase "false=ble_nat (length l2) n0".
        destruct l2.
-       apply OT1 in H1.
-       inversion H1.
+       apply OT1 in H2.
+       inversion H2.
        split.
        destruct l.
-       rewrite Heqbeq in H0.
+       rewrite Heqbeq in H1.
        destruct n0.
-       simpl in H0,H1.
+       simpl in H2,H1.
        inversion H1.
-       inversion H0.
+       inversion H2.
        simpl.
        reflexivity.
-       simpl in H1 ,H0.
+       simpl in H1 ,H2.
        inversion H1.
-       simpl in H1,H0.
-       rewrite Heqbeq in H0.
+       simpl in H1,H2.
+       rewrite Heqbeq in H1.
        destruct n0.
-       simpl in H1,H0.
+       simpl in H1,H2.
        inversion H1.
-       inversion H0.
+       inversion H2.
        reflexivity.
-       simpl in H1,H0.
+       simpl in H1,H2.
        destruct n0.
        inversion H1.
-       inversion H0.
+       inversion H2.
        simpl.
-       rewrite H3.
        reflexivity.
        
-       inversion H.
-       apply OT1 in H3.
-       apply OT1 in H2.
-       rewrite <- H3 in Heqble.
-       simpl in Heqble.
-       rewrite <- Heqble in H1,H0.
-       destruct l1.
        inversion H0.
+       apply OT1 in H6.
+       rewrite <- H6 in Heqble.
+       simpl in Heqble.
+       rewrite <- Heqble in H1,H2.
+       destruct l1.
+       inversion H1.
        simpl.
-       inversion H2.
+       apply OT1 in H5.
+       simpl H5.
+       inversion H5.
        apply bleSF1 in Heqble.
        rewrite <- Heqble.
        inversion H1.
-       inversion H0.
-       rewrite <- H6,H8.
+       inversion H2.
+       rewrite <- H9.
+       rewrite <- H11.
        destruct l.
        reflexivity.
        remember (ble_nat (S (length l)) n0) as ble.
@@ -564,10 +726,7 @@ Proof.
        reflexivity.
        exists (a1 :: insert1 n0 a l2).
        reflexivity.
-    SCase "beq_nat n n0=false".
-     inversion H.
-     apply OT1 in H3.
-     apply OT1 in H2.
+    SSCase "beq_nat n n0=false".
      simpl.
      rewrite beq_nat_sym.
      rewrite <-Heqbeq.
@@ -576,127 +735,129 @@ Proof.
      destruct ble.
      SSSCase "true=ble_nat n0 n".
       simpl.
+      inversion H0.
+      apply OT1 in H6.
+      apply OT1 in H5.
       remember (ble_nat (length l2) n) as ble.
       destruct ble.
       SSSSCase "true = ble_nat (length l2) n".
-      simpl in H1,H0.
-      rewrite <- H3 in Heqble0.
+      simpl in H1,H2.
+      rewrite <- H6 in Heqble0.
       unfold insert in H1.
       destruct n, l.
       inversion Heqble0.
       inversion Heqble0.
-      simpl in H0.
-      inversion H0.
-      simpl in  Heqble0.
-      simpl in H0.
-      rewrite <- Heqble0 in H0.
-      inversion H0.
+      simpl in H1.
+      inversion H1.
+      rewrite <- Heqble0 in H1.
+      inversion H1.
       SSSSCase "false = ble_nat (length l2) n".
        split.
        destruct l,l1,l2,n,n0.
        (*2^5-1 easy goals*)
        inversion Heqbeq.
        inversion Heqble.
+       inversion H2.
        inversion H1.
-       inversion H0.
-       inversion H0.
        inversion H1.
-       inversion H0.
+       inversion H2.
        inversion H1.
+       inversion H2.
        inversion Heqbeq.
        inversion Heqble.
        inversion Heqble0.
        inversion Heqble0.
        inversion Heqbeq.
        inversion Heqble.
-       inversion H0.
        inversion H1.
+       inversion H2.
        inversion Heqbeq.
        inversion Heqble.
-       inversion H2.
-       inversion H2.
-       inversion H2.
-       inversion H2.
-       inversion H2.
-       inversion H2.
-       inversion H3.
+       inversion H5.
+       inversion H5.
+       inversion H5.
+       inversion H5.
+       inversion H5.
+       inversion H5.
+       inversion H6.
        inversion Heqble.
-       inversion H3.
-       inversion H3.
+       inversion H6.
+       inversion H6.
        inversion Heqbeq.
        inversion Heqble.
-       simpl in H1,H0.
+       simpl in H1,H2.
        destruct n.
-        inversion H1.
-        inversion H0.
-        simpl.
-        reflexivity.
-       destruct (ble_nat (length l) n).
-       inversion H0.
-       inversion H0.
        inversion H1.
+       inversion H2.
+       simpl.
+       rewrite H8.
+       reflexivity.
+       destruct (ble_nat (length l) n).
+       inversion H1.
+       inversion H1.
+       inversion H2.
        simpl.
        destruct l.
-        inversion H.
-        inversion H4.
+       inversion H0.
+       inversion H7.
        simpl.
        destruct n.
-       rewrite H5.
+       rewrite H8.
        reflexivity.
-       rewrite H5.
-       simpl in H2,H3,Heqble0.
-       inversion H3.
-       rewrite <- H9 in Heqble0.
-       simpl in H2,H3,Heqble0.
+       rewrite H8.
+       simpl in H5,H6,Heqble0.
+       inversion H6.
+       rewrite <- H12 in Heqble0.
+       simpl in H5,H6,Heqble0.
        rewrite<-Heqble0.
        reflexivity.
        (*2^5'th goal*)
        simpl.
        destruct n0.
        inversion H1.
-       inversion H0.
+       inversion H2.
        destruct n.
        inversion Heqbeq.
        simpl.
        destruct l.
-       inversion H7.
+       inversion H8.
        destruct (ble_nat (length (a4 :: l)) n).
-       inversion H7.
-       inversion H7.
-       rewrite <- H5,H8.
+       inversion H8.
+       inversion H8.
+       rewrite <- H9,H11.
        reflexivity.
        remember (ble_nat (length l1) n0) as ble.
        destruct ble.
-       inversion H1.
-       simpl in H2,H3.
        inversion H2.
-       rewrite <- H6 in Heqble1.
-       apply bleST in Heqble1.
-       rewrite <- Heqble1 in H5.
+       simpl in H5,H6.
        inversion H5.
-       inversion H0.
+       rewrite <- H9 in Heqble1.
+       apply bleST in Heqble1.
+       rewrite <- Heqble1 in H8.
+       inversion H8.
        inversion H1.
+       inversion H2.
        destruct ( ble_nat (length l) n0).
-       inversion H6.
+       inversion H9.
        destruct n.
        inversion Heqble.
        destruct ( ble_nat (length l) n).
-       inversion H5.
-       inversion H5.
-       inversion H6.
+       inversion H8.
+       inversion H8.
+       inversion H9.
        destruct l.
-       rewrite <- H8 in Heqble1.
+       rewrite <- H11 in Heqble1.
        inversion Heqble1.
        simpl.
        simpl in Heqble,Heqbeq.
        apply ble_neg in Heqbeq. 
        rewrite <- Heqbeq.
        simpl.
-       rewrite <- H10 in Heqble0.
+       rewrite <- H13 in Heqble0.
        simpl in Heqble0.
        rewrite <- Heqble0.
        rewrite OT3.
-       rewrite <- H7,H9.
+       rewrite <- H10,H12.
        reflexivity.
        apply Heqble.
        apply Heqble.
@@ -712,196 +873,204 @@ Proof.
        end).
        reflexivity.
        apply Heqble.
-     SSCase "false=ble_nat n0 n".
-      rewrite H2 in H3.
+     SSSCase "false=ble_nat n0 n".
+      inversion H0.
+      apply OT1 in H6.
+      apply OT1 in H5.
+      rewrite H5 in H6.
       simpl.
-      assert (H4:true=ble_nat n n0).
+      assert (H7:true=ble_nat n n0).
       apply ble_neg'.
       apply Heqbeq.
       apply Heqble.
-      rewrite <- H4.
+      rewrite <- H7.
       simpl.
-      unfold apply in H0,H1.
-      unfold insert in H0,H1.
+      unfold apply in H1.
+      unfold insert in H1.
+      unfold apply in H2.
+      unfold insert in H2.
       remember (ble_nat (length l1) n0) as ble. 
       destruct ble.
-      SSSCase "true = ble_nat (length l1) n0".
+      SSSSCase "true = ble_nat (length l1) n0".
        destruct l,n.
-       simpl in H0.
-       destruct n0.
-       inversion Heqble.
-       inversion H1.
-       destruct n0.
-       inversion Heqble.
-       inversion H1.
-       simpl in H0.
-       destruct n0.
-       inversion Heqbeq.
        simpl in H1.
        destruct n0.
-       rewrite <- H2 in Heqble0.
+       inversion Heqble.
+       inversion H2.
+       destruct n0.
+       inversion Heqble.
+       inversion H2.
+       simpl in H1.
+       destruct n0.
+       inversion Heqbeq.
+       simpl in H2.
+       destruct n0.
+       rewrite <- H5 in Heqble0.
        inversion Heqble0.
-       rewrite<- H2 in Heqble0.
+       rewrite<- H5 in Heqble0.
        inversion Heqble0.
-       rewrite <- H6 in H1.      
-       inversion H1.
+       rewrite <- H9 in H2.      
+       inversion H2.
        inversion Heqble0.
        destruct n0.
        inversion Heqble.
-       rewrite H2 in H1.
-       rewrite <- Heqble0 in H1.
-       inversion H1.
+       rewrite H5 in H2.
+       rewrite <- Heqble0 in H2.
+       inversion H2.
       SSSSCase "false = ble_nat (length l2) n".
        destruct l,l1,l2,n,n0.
        (*2^5-1 easy goals*)
        inversion Heqbeq.
-       inversion H2.
+       inversion H5.
        inversion Heqble.       
+       inversion H2.      
+       inversion Heqbeq. 
+       inversion H2.
+       inversion H1.
        inversion H1.      
        inversion Heqbeq. 
+       inversion H2.
        inversion H1.
-       inversion H0.
-       inversion H0.      
-       inversion Heqbeq. 
-       inversion H1.
-       inversion H0.
-       inversion H0.      
-       inversion Heqbeq.      
        inversion H1.      
-       inversion Heqble.      
-       inversion H0.      
        inversion Heqbeq.      
        inversion H2.      
+       inversion Heqble.      
+       inversion H1.      
+       inversion Heqbeq.      
+       inversion H5.      
        inversion Heqble.
-       inversion H2.      
+       inversion H5.      
        inversion Heqbeq.
-       inversion H2.      
+       inversion H5.      
        inversion Heqble.      
-       inversion H2.      
+       inversion H5.      
        inversion Heqbeq.      
-       inversion H3.      
+       inversion H6.      
        inversion Heqble.      
-       inversion H3.      
+       inversion H6.      
        inversion Heqbeq.
-       simpl in H1,H0.
+       simpl in H1,H2.
         destruct n0.
         inversion H1.
-        inversion H0. 
+        inversion H2. 
         simpl.
         split.
-        rewrite <- H6.
         reflexivity.
         exists (a2 :: a3 :: a0 :: l).
         reflexivity.
-       
-       simpl.
+        simpl.
         split.
         destruct l1.
-        inversion H2.
+        inversion H5.
         destruct l1.
-        rewrite <-H2 in Heqble0.
+        rewrite <-H5 in Heqble0.
         simpl in Heqble0.
-        rewrite <-Heqble0 in H1.
-        inversion H0.
-        inversion H.
-        rewrite H8 in H9.
-        unfold apply in H9.
-        unfold insert in H9.
-        simpl H9.
-        unfold length in  H9.
-        simpl in H9.
-        inversion H9.
-        inversion H2.
-        replace (length (a2 :: a4 :: a5 :: l1)) with (S(S(length l))) in Heqble0.
-        simpl in Heqble0.
-        rewrite <- Heqble0 in H1.
-        destruct l.
-        inversion H6.
+        rewrite <-Heqble0 in H2.
         inversion H1.
         inversion H0.
-        rewrite <-H10,H7.
+        rewrite H11 in H12.
+        unfold apply in H12.
+        unfold insert in H12.
+        simpl H12.
+        unfold length in  H12.
+        simpl in H12.
+        inversion H12.
+        inversion H5.
+        replace (length (a2 :: a4 :: a5 :: l1)) with (S(S(length l))) in Heqble0.
+        simpl in Heqble0.
+        rewrite <- Heqble0 in H2.
+        destruct l.
+        inversion H9.
+        inversion H1.
+        inversion H2.
+        rewrite H13,H12.
+        rewrite<-H11,H14.
         reflexivity.
         exists ((a :: a3 :: l2)).
         reflexivity.
         inversion Heqble.
        (*2^5'th goal*)
         split.
-        simpl in H1,H0.
+        simpl in H1,H2.
         destruct n,n0.
         inversion Heqbeq.
-        simpl in Heqble0,H2.
-        inversion H2.
-        rewrite <-H6 in Heqble0.
+        simpl in Heqble0,H5.
+        inversion H5.
+        rewrite <-H9 in Heqble0.
         simpl in Heqble0.
-        rewrite <- Heqble0 in H1.
+        rewrite <- Heqble0 in H2.
         destruct l.
         inversion Heqble0.
         inversion H1.
-        inversion H0.
+        inversion H2.
         simpl.
-        rewrite<- H7,H9.
+        rewrite<- H10,H12.
         reflexivity.        
         inversion Heqble.
 
         simpl in Heqble0.
-        inversion H2.
-        rewrite <- H6 in Heqble0.
+        inversion H5.
+        rewrite <- H9 in Heqble0.
         simpl in Heqble0.
-        rewrite <- Heqble0 in H1.
+        rewrite <- Heqble0 in H2.
         inversion Heqble.
-        apply ble_nat_negtrans with (n0:=length l) in H7.
-        rewrite<-H7 in H0.
+        apply ble_nat_negtrans with (n0:=length l) in H10.
+        rewrite<-H10 in H1.
         destruct l.
         destruct n0.
         inversion Heqble.
         inversion Heqble0.
         inversion H1.
-        inversion H0.
+        inversion H2.
         simpl.
         destruct n.
         simpl.
-        rewrite<- H8,H10.
+        rewrite<- H11,H13.
         reflexivity.
         destruct l1,l2.
         inversion H9.
-        inversion H11.
-        inversion H9.
-        inversion H9.
-        inversion H11.
+        inversion H12.
+        inversion H14.
+        inversion H12.
+        inversion H14.
+        rewrite H18.
         destruct l.
-        inversion H.
-        inversion H5.
+        inversion H0.
+        inversion H8.
+        inversion H9.
         inversion H6.
-        inversion H3.
-        replace (length (a4 :: a7 :: l)) with (length l1)in H7.
-        inversion H7.
-        apply bleSF in H18.
-        rewrite H13.
-        rewrite <-H17.
-        rewrite <-H18.
-        rewrite <- H13.
+        replace (length (a4 :: a7 :: l)) with (length l1)in H10.
+        inversion H10.
+        apply bleSF in H21.
+        rewrite <-H21.
+        destruct l2.
+        rewrite H20 in H21.
+        inversion H21.
+        inversion H12.
         simpl.
+        rewrite <-H13,H11.
+        destruct l1.
+        inversion H16.
+        inversion H16.
+        rewrite H25.
         destruct n0.
-        inversion H4.
-        replace ( match insert1 (S n0) a0 (a7 :: l) with
-         | [] => []
-         | h :: l' => h :: insert1 n a l'
-         end) with (a7:: (insert1 n a(insert1 n0 a0  l))).
-        rewrite OT4.
-        rewrite <- H8,H10.
-        reflexivity.
+        inversion Heqble.
+        inversion H18.
+        rewrite <-H24,H26.
         simpl in Heqble.
-        apply Heqble.
-        simpl.
+        rewrite <- H25.
+        rewrite OT4.
         reflexivity.
+        apply Heqble.
         apply Heqble0.
         simpl.
         destruct n.
+        
         exists (a3 :: insert1 0 a l2).
         reflexivity.
-        rewrite H3 in Heqble0.
+        rewrite H6 in Heqble0.
         destruct n0.
-        inversion H4.
+        inversion H7.
         simpl in Heqble,Heqble0.
         apply ble_nat_negtrans with (n0:=length l2) in Heqble.
         rewrite <- Heqble.
@@ -909,22 +1078,5 @@ Proof.
         reflexivity.
         apply bleSF.
         apply Heqble0.
-  Case "f1=inv, f2=del".
-   inversion H.
-   inversion H.
-   apply OT1 in H2.
-   apply OT5 in H3.
-
-   unfold OT.
-   simpl.
-   remember (ble_nat n n0) as ble.
-   destruct ble.
-    SCase "true = ble_nat n n0".
-     simpl.
-     remember (ble_nat (length l1) (S n0)) as ble.
-     destruct ble.
-     SSCase (true = ble_nat (length l1) (S n0)).
-     
-     SSCase (false = ble_nat (length l1) (S n0)).
-    SCase "false = ble_nat n n0".         
+        
         

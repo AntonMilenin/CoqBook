@@ -9,7 +9,7 @@ Require Export "Prop".
     logical connectives -- conjunction, disjunction, negation,
     existential quantification, even equality -- can be defined using
     just these. *)
-
+SearchAbout beq_nat.
 (* ########################################################### *)
 (** * Quantification and Implication *)
 
