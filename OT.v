@@ -672,7 +672,64 @@ Proof.
      simpl in H0. apply H0.  
 Qed.
 
-Theorem OT_ : forall (f1 f2:function) (b1 b2: bool) (l l1 l2:list ascii),((apply f1 l)=Some l1 
+Theorem OT9 : forall n n0 l,false = ble_nat (length l) (S n) ->  false = ble_nat (S n) n0->
+delete1 n0
+           match l with
+           | [] => []
+           | h :: l' => h :: delete1 n l'
+           end  = delete1 n (delete1 n0 l).
+Proof.
+  intros.
+  generalize dependent n0.
+  generalize dependent n.
+  induction l. intros.
+  destruct n0,n.
+   inversion H.
+   inversion H.
+   inversion H.
+   inversion H.
+  intros.
+  destruct n0,n.
+   destruct l. inversion H. simpl. reflexivity.
+   simpl.  reflexivity.
+   inversion H0.
+   simpl. 
+    rewrite <-IHl. 
+     reflexivity.
+     simpl in H. apply H.
+     simpl in H0. apply H0.  
+Qed.
+
+Theorem OT10 : forall n n0 l,false = ble_nat (length l) (S n0) ->   true = ble_nat n (S n0)->false = beq_nat (S n0) n->
+      delete1 n0 (delete1 n l) =
+      delete1 n match l with
+                | [] => []
+                | h :: l' => h :: delete1 n0 l'
+                end.
+Proof.
+  intros.
+  generalize dependent n0.
+  generalize dependent n.
+  induction l. intros.
+  destruct n0,n.
+   inversion H.
+   inversion H.
+   inversion H.
+   inversion H.
+  intros.
+  destruct n0,n.
+   destruct l. inversion H. simpl. reflexivity.
+   destruct n. inversion H1. inversion H0.
+   simpl.  reflexivity.
+   simpl. 
+    rewrite <-IHl. 
+     reflexivity.
+     simpl in H. apply H.
+     simpl in H0. apply H0. 
+     simpl in H1. apply H1.  
+Qed.
+
+Theorem OT_correctness : forall (f1 f2:function) (b1 b2: bool) (l l1 l2:list ascii),((apply f1 l)=Some l1 
  /\ (apply f2 l) =Some l2)-> (apply (OT f1 f2 false) l1 =apply (OT f2 f1 true) l2/\exists l3,apply (OT f2 f1 true) l2=Some l3).
 Proof.
   intros.
@@ -1547,18 +1604,101 @@ Proof.
        split. reflexivity. exists (a0 :: delete1 n0 l). reflexivity.
       unfold OT. simpl. rewrite <- Heqbeq. rewrite beq_nat_sym in Heqbeq. rewrite <-Heqbeq.
        remember ((ble_nat n0 n)) as ble.
-        destruct ble. 
-         rewrite beq_nat_sym in Heqbeq. inversion Heqbeq. apply ble_nat_neg1 in H5. rewrite <- H5.
-          simpl. inversion H0. inversion H1. inversion H2. inversion H3. 
-          
-   
-          
-          
- 
-       
-     
-    
-    
-    
-     
-     
+        destruct ble.
+        SCase "n0<=n".
+         rewrite beq_nat_sym in Heqbeq. inversion Heqble.  apply ble_nat_neg0 in H5. rewrite <- H5.
+          simpl. unfold delete. 
+          destruct n.  
+           destruct n0. inversion Heqbeq. inversion Heqble.
+           destruct l. inversion H2. inversion H0. simpl. inversion H1. inversion H2.
+            destruct n0.
+             simpl. destruct l. inversion H0. simpl. inversion H3. remember (ble_nat (length (a3 :: l)) n) as ble.
+              destruct ble. inversion H6. simpl in Heqble0. simpl. rewrite<- Heqble0. 
+              destruct l1. inversion H6. inversion H6. inversion H7. rewrite <- H10,H13.
+              split. reflexivity. exists (a1 :: delete1 n (a3 :: l)). reflexivity.
+             inversion H3. remember (ble_nat (length l) n) as ble. destruct ble. inversion H6.
+              inversion H5. apply ble_nat_negtrans with (n0:=(length l)) in H10.
+              rewrite <- H10 in H7. 
+              remember (beq_nat (length l) (S n0)) as beq. destruct beq. 
+               apply beq_nat_eq in Heqbeq0. rewrite Heqbeq0 in Heqble0. 
+                simpl in Heqbeq,Heqble. apply ble_nat_neg3 in Heqble0. rewrite <-Heqble in Heqble0.
+                inversion Heqble0. 
+                rewrite beq_nat_sym . apply Heqbeq.
+               replace (ble_nat (length l) n0) with (ble_nat (S (length l)) (S n0)) in H10.
+                apply ble_nat_neg3 in H10. rewrite <-H10.
+                destruct l1. inversion H6. destruct l2. inversion H7. inversion H6. inversion H7.
+                destruct n. 
+                 simpl. destruct l. inversion H0. destruct n0. inversion Heqbeq. inversion H5.
+                 simpl. rewrite OT9. rewrite <- H11,H14. rewrite<-H12,H15.
+                  split. reflexivity. exists (a1 :: a4 :: delete1 n (delete1 n0 l)). reflexivity.
+                  apply Heqble0. apply H5. apply Heqbeq0. reflexivity. apply Heqble0. apply Heqbeq.
+        SCase "n0>n".
+         inversion Heqble.  apply ble_nat_neg in H5. rewrite <- H5. simpl.
+          inversion H0. inversion H1. inversion H2. inversion H3.
+          destruct n0. inversion Heqble. simpl.
+          replace (ble_nat (length l1) n0) with (ble_nat (S (length l1)) (S n0)).
+          replace (ble_nat (length l2) n) with (ble_nat (S (length l2)) (S n)).
+          rewrite <- H8. rewrite <- H9.
+          remember (ble_nat (length l) (S n0)) as ble. destruct ble. inversion H7.
+          remember (ble_nat (length l) n) as ble. destruct ble. inversion H6.
+          remember (beq_nat (length l) (S n)) as beq. destruct beq. 
+           apply beq_nat_eq in Heqbeq0. rewrite Heqbeq0 in Heqble0. 
+            apply ble_nat_neg3 in Heqble0. 
+            rewrite <- Heqble0 in H5. inversion H5.
+            rewrite beq_nat_sym . apply Heqbeq.
+           inversion Heqble1. replace (ble_nat (length l) n) with (ble_nat (S(length l)) (S n)) in H10.
+            apply ble_nat_neg3 in H10. rewrite <- H10.
+            inversion H6. inversion H7. rewrite OT10. rewrite <-H11,H13. 
+            split. reflexivity. exists (a1
+                 :: delete1 n match l with
+                  | [] => []
+                  | h :: l' => h :: delete1 n0 l'
+                  end). reflexivity.
+            apply Heqble0. apply H5. apply Heqbeq. apply Heqbeq0. reflexivity. reflexivity.
+            reflexivity.
+  Case "del,id".
+   inversion H. inversion H. apply delete_len in H2.
+   destruct l,l1,n.
+    inversion H2.
+    inversion H2.
+    inversion H2.
+    inversion H2.
+    inversion H0. rewrite H5 in H1. inversion H1. simpl.
+     split. reflexivity. exists ([]). reflexivity.
+    inversion H0. destruct l.  inversion H0. 
+     destruct (ble_nat (length (a0 :: l)) n). inversion H5. inversion H5.
+    simpl. destruct l2. inversion H1. simpl. destruct l. inversion H0. inversion H0. inversion H3.
+     rewrite <- H5,H6. split. reflexivity. exists (a2 :: l1). reflexivity.
+    inversion H0. simpl. inversion H3. simpl. destruct (ble_nat (length l) n). inversion H5. 
+     inversion H5. split. reflexivity. exists (a0 :: delete1 n l). reflexivity.
+  Case "id,ins".
+   simpl. inversion H. inversion H. apply insert_len in H3.
+   destruct l,l2,n.
+    inversion H3.
+    inversion H3.
+    inversion H0. inversion H1. split. reflexivity. exists (a0 :: []). reflexivity.
+    inversion H1.
+    inversion H3.
+    inversion H3.
+    inversion H1. inversion H2. split. reflexivity. exists (a1 :: a0 :: l). reflexivity.
+    inversion H1. remember (match n with | 0 => false | S m' => ble_nat (length l) m'  end) as mat. destruct mat.
+     inversion H5. destruct l1. inversion H2. inversion H2. simpl. rewrite <-H7. rewrite <-Heqmat.
+     split. reflexivity. exists (a2 :: insert1 n a l). reflexivity.
+  Case "id,del".
+   inversion H. inversion H. apply delete_len in H3.
+   destruct l,l2,n.
+    inversion H3.
+    inversion H3.
+    inversion H1.
+    inversion H1.
+    inversion H1. rewrite H5 in H2. inversion H2. simpl.
+     split. reflexivity. exists ([]). reflexivity.
+    inversion H1. destruct (ble_nat (length l) n). inversion H5. inversion H5.
+    inversion H0. inversion H1. split. reflexivity. exists (a0 :: l2). reflexivity.
+    destruct l1. inversion H0. inversion H0. simpl. inversion H1. rewrite <- H6. 
+     destruct (ble_nat (length l) n). inversion H7. inversion H7. rewrite <- H5,H8.
+     split. reflexivity. exists (a0 :: delete1 n l). reflexivity.
+  Case "ins,ins".
+   simpl. inversion H. inversion H0. inversion H1. rewrite <- H3,H4.
+     split. reflexivity. exists (l2). reflexivity.
+Qed.
